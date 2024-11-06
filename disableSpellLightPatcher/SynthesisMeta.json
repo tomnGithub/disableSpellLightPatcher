@@ -1,0 +1,13 @@
+{
+  "Nickname": "disableSpellLightPatcher",
+  "Visibility": "Visible",
+  "OneLineDescription": "Disables Light Emit by Spells",
+  "LongDescription": "Patcher that removes light emit by spells in selected schools. Useful for making it so you are not detected while sneaking simply for having your spells out.",
+  "PreferredAutoVersioning": "Default",
+  "RequiredMods": [],
+  "TargetedReleases": [
+    "SkyrimSE",
+    "SkyrimVR",
+    "SkyrimSEGog"
+  ]
+}
