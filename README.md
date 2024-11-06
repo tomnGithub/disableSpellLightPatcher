@@ -1,2 +1,2 @@
-# unofficialReqtificatorLite
-Patcher that mimics some of the functions of the Reqtificator, allows you to patch selected ESPs and record types. https://www.nexusmods.com/skyrimspecialedition/mods/115746
+# disableSpellLightPatcher
+Patcher that removes light emit by spells in selected schools. Useful for making it so you are not detected while sneaking simply for having your spells out.
