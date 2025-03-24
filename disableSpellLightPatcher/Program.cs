@@ -28,6 +28,7 @@ using IQuest = Mutagen.Bethesda.Skyrim.IQuest;
 using System.Collections;
 using DynamicData;
 using Newtonsoft.Json;
+using static Mutagen.Bethesda.Starfield.PhotoModeFeature;
 
 
 // Function to initialize the matches dictionary with all keys set to 0
@@ -50,9 +51,197 @@ public class Program
             .SetTypicalOpen(GameRelease.SkyrimSE, "disableSpellLightPatcher.esp")
             .Run(args);
     }
-    
+    static void WriteToIniFile(string filePath, string text)
+    {
+        // Open the file for appending
+        using (StreamWriter writer = new StreamWriter(filePath, true, Encoding.UTF8))
+        {
+            // Write the text to the file
+            writer.WriteLine(text);
+        }
+    }
+    static void ClearFile(string filePath)
+    {
+        // Open the file for writing and clear its content
+        using (StreamWriter writer = new StreamWriter(filePath, false, Encoding.UTF8))
+        {
+            // Write nothing to the file (effectively clearing its content)
+        }
+    }
+
     public static void RunPatch(IPatcherState<ISkyrimMod, ISkyrimModGetter> state)
     {
+        bool readPls = false;
+        try
+        {
+            var mod = state.LoadOrder.TryGetValue("DisableSpellLight_Prebuilt.esp");
+            var masters = mod?.Mod?.ModHeader.MasterReferences;
+
+            if (masters?.Count >0)
+            {
+                Console.WriteLine("ERROR: Delete DisableSpellLight_Prebuilt.esp, then rerun Sythesis.");
+                Console.WriteLine("ERROR: Delete DisableSpellLight_Prebuilt.esp, then rerun Sythesis.");
+                Console.WriteLine("ERROR: Delete DisableSpellLight_Prebuilt.esp, then rerun Sythesis.");
+                Console.WriteLine("ERROR: Delete DisableSpellLight_Prebuilt.esp, then rerun Sythesis.");
+                Console.WriteLine("ERROR: Delete DisableSpellLight_Prebuilt.esp, then rerun Sythesis.");
+                Console.WriteLine("ERROR: Delete DisableSpellLight_Prebuilt.esp, then rerun Sythesis.");
+                readPls = true;
+            }
+          
+
+
+       
+        }
+        catch (Exception ex) { }
+     
+        if (formSettings.Value.sneakOn == true && readPls == false )
+        {
+            // Define the path to the file
+            string outputPath = $@"{state.DataFolderPath}\LightPlacer\disableSpellLightPatcher.json";
+
+
+            // Check if the file exists and read it into ignoreList, else create it
+            if (File.Exists(outputPath))
+            {
+
+                File.WriteAllText(outputPath, string.Empty);
+            }
+            File.AppendAllText(outputPath, "[" + Environment.NewLine);
+            int spellnum = 0;
+            string format = "  {\r\n    \"visualEffects\": [ \"baseSpellHere\" ],\r\n\t\r\n    \"lights\": [\r\n\t\t{\r\n\t\t\"points\": [\r\n          [0,0,0]\r\n        ],\r\n\t\t\"data\": {\r\n\t\t\t\"light\": \"0x1234~MyCoolSpellMod.esp\",\r\n\t\t    \"conditions\": [ \"Self IsSneaking NONE NONE == 0 AND\"]\r\n\t\t}\r\n\t\t}\r\n\t\r\n\t]\r\n  }";
+            var seenCastArts = new HashSet<string>();
+            foreach (var spelll in state.LoadOrder.PriorityOrder.Spell().WinningOverrides())
+            {
+                try
+                {
+                    if (spelll.HalfCostPerk == null)
+                    {
+                        continue;
+                    }
+                    bool isPlayerSpell = false;
+                    IFormLinkGetter<IPerkGetter> halfPerk = spelll.HalfCostPerk;
+                    var halfPerkGetter = halfPerk.Resolve(state.LinkCache);
+                    if (halfPerkGetter.EditorID != null &&
+                     halfPerkGetter.EditorID.IndexOf("Alteration", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        if (formSettings.Value.AltOn == false)
+                        {
+                            continue;
+                        }
+                        isPlayerSpell = true;
+                    }
+                    if (halfPerkGetter.EditorID != null &&
+                     halfPerkGetter.EditorID.IndexOf("Conjuration", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        if (formSettings.Value.ConjOn == false)
+                        {
+                            continue;
+                        }
+                        isPlayerSpell = true;
+                    }
+                    if (halfPerkGetter.EditorID != null &&
+                     halfPerkGetter.EditorID.IndexOf("Destruction", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        if (formSettings.Value.DestOn == false)
+                        {
+                            continue;
+                        }
+                        isPlayerSpell = true;
+                    }
+                    if (halfPerkGetter.EditorID != null &&
+                   halfPerkGetter.EditorID.IndexOf("Illusion", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        if (formSettings.Value.IllOn == false)
+                        {
+                            continue;
+                        }
+                        isPlayerSpell = true;
+                    }
+                    if (halfPerkGetter.EditorID != null &&
+                  halfPerkGetter.EditorID.IndexOf("Restoration", StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        if (formSettings.Value.RestOn == false)
+                        {
+                            continue;
+                        }
+                        isPlayerSpell = true;
+                    }
+
+                    if (isPlayerSpell == true)
+                    {
+
+                        foreach (var effectInSpell in spelll.Effects)
+                        {
+                            IFormLinkGetter<IMagicEffectGetter> magEffect = effectInSpell!.BaseEffect;
+                            var magEffectGetter = magEffect.Resolve(state.LinkCache);
+                            IFormLinkGetter<ILightGetter> magicLink = magEffectGetter.CastingLight;
+                            IFormLinkGetter<IArtObjectGetter> castArtLink = magEffectGetter.CastingArt;
+                            string castArtID = castArtLink.FormKey.ToString();
+
+
+                            // Skip if we've already seen this castArtID
+                            if (seenCastArts.Contains(castArtID))
+                            {
+                                continue;
+                            }
+
+
+
+                            seenCastArts.Add(castArtID);
+
+                            var lightGetter = magicLink.Resolve(state.LinkCache);
+                            var castArtGetter = castArtLink.Resolve(state.LinkCache);
+                            var originalLightCopy = state.PatchMod.Lights.DuplicateInAsNewRecord(lightGetter);
+                            string spellExclude = castArtGetter.FormKey.ToString();
+                            // Check if the 7th character (index 6, as indexes start at 0) is ':'
+                            if (spellExclude.Length > 6 && spellExclude[6] == ':')
+                            {
+                                spellExclude = spellExclude.Substring(0, 6) + "~" + spellExclude.Substring(7);
+                            }
+                            spellExclude = "0x" + spellExclude;
+                            spellnum = spellnum + 1;
+                            string nullSpellName = "madSpellName" + spellnum.ToString();
+                            originalLightCopy.EditorID = nullSpellName;
+                            string replaced = format.Replace("0x1234~MyCoolSpellMod.esp", nullSpellName);
+                            replaced = replaced.Replace("baseSpellHere", spellExclude);
+
+                            File.AppendAllText(outputPath, replaced + "," + Environment.NewLine);
+
+
+
+
+
+
+
+                        }
+
+                    }
+                }
+                catch
+                {
+
+                }
+
+
+            } //end foreach
+
+
+            // Read the entire file
+            string fileContent = File.ReadAllText(outputPath);
+
+            // Find the last comma and remove it
+            int lastCommaIndex = fileContent.LastIndexOf(',');
+            if (lastCommaIndex != -1)
+            {
+                // Remove just the last comma
+                fileContent = fileContent.Remove(lastCommaIndex, 1);
+
+                // Rewrite the modified content back to the file
+                File.WriteAllText(outputPath, fileContent);
+            }
+            File.AppendAllText(outputPath, "]");
+        }
+        
 
         foreach (var spelll in state.LoadOrder.PriorityOrder.Spell().WinningOverrides())
         {
@@ -124,6 +313,13 @@ public class Program
                         modifedLight.Radius = 0;
                         modifedLight.FadeValue = 0;
                         modifedLight.NearClip = 0;
+                        
+
+
+
+
+
+
 
                     }
 
@@ -133,9 +329,9 @@ public class Program
             {
 
             }
-        
 
-        }
+
+        } //end foreach
 
 
 

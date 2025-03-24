@@ -9,6 +9,8 @@ namespace disableSpellLightPatcher
 {
     public record Settings
     {
+        [SettingName("Disable Lights only when Sneaking. Requires Light Placer.")]
+        public bool sneakOn { get; set; } = true; // Default is on
 
         [SettingName("Alteration")]
         public bool AltOn { get; set; } = true; // Default is on
